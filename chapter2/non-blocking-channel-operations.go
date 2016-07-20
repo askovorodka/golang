@@ -5,11 +5,12 @@ import (
 )
 
 func main()  {
-	messages := make(chan string, 1)
-	signals := make(chan bool, 1)
+
+	messages := make(chan string)
+	signals := make(chan bool)
 
 	select {
-	case msg := <- messages:
+	case msg := <-messages:
 		fmt.Println("recieved message", msg)
 		default :
 		fmt.Println("no recieved message")
@@ -17,20 +18,19 @@ func main()  {
 
 
 	msg := "hi"
-
 	select {
-	case messages <- msg:
+	case messages <-msg:
 		fmt.Println("message send", msg)
-		default:
+	default:
 		fmt.Println("no message send")
 	}
 
 	select {
-	case msg := <- messages:
+	case msg := <-messages:
 		fmt.Println("recoeved message", msg)
-	case sig := <- signals:
+	case sig := <-signals:
 		fmt.Println("recieved signal", sig)
-		default:
+	default:
 		fmt.Println("no activity")
 	}
 
