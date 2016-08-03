@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"log"
-	//"time"
+	"time"
 )
 
 type pageData struct {
@@ -54,15 +54,11 @@ func setPages(urlPage string, pages chan <- string, chapter chan <- bool)  {
 			panic(err2.Error())
 		}
 
-		//fmt.Println(url)
 		if s.HastNext == false {
-			//chapter<- true
 			close(pages)
 			break
 		}
 		page += 1
-
-		//time.Sleep(time.Second)
 
 	}
 
@@ -70,35 +66,11 @@ func setPages(urlPage string, pages chan <- string, chapter chan <- bool)  {
 
 func setTags(pages <- chan string, tags chan <- TagItem, chapter chan <- bool, check chan bool)  {
 
-	/*for url := range pages {
-		res, err := http.Get(url)
-		if err != nil {
-			fmt.Println(err)
-			panic(err.Error())
-		}
-		defer res.Body.Close()
-
-		body, err := ioutil.ReadAll(res.Body)
-		if (err != nil) {
-			panic(err.Error())
-		}
-
-		page := new(pageData)
-		json.Unmarshal([]byte(body), &page)
-
-		if page.Tags != nil {
-			for _, Item := range page.Tags {
-				tags <- Item
-				log.Println("setTags:", Item)
-			}
-		}
-
-	}*/
-
 	for {
 		select {
 		case url, ok := <- pages:
 			if ok {
+
 				res, err := http.Get(url)
 				if err != nil {
 					fmt.Println(err)
@@ -121,38 +93,42 @@ func setTags(pages <- chan string, tags chan <- TagItem, chapter chan <- bool, c
 					}
 				}
 
-			} else {
-				c := len(check)
-				t := len(tags)
-
-				if t == 0 {
-					fmt.Println("C - ", c)
-					if c > 0 {
-						return
-					} else {
-						check<-true
-						close(tags)
-						return
-					}
-				}
 			}
 		}
 	}
 
 }
 
-func getTags(tags <- chan TagItem, chapter chan <- bool)  {
-	/*tag, more := <-tags
-	if more {
-		fmt.Println("getTags:", tag)
-	} else {
-		chapter<- true
-	}*/
-	for tag := range tags {
-		log.Println("getTags:",tag)
+func getTags(tags chan TagItem, chapter chan <- bool, check chan bool)  {
+
+	for {
+		select {
+		case tag, ok := <- tags:
+			if ok {
+				log.Println("getTags:", tag)
+			}
+
+		case <-time.After(time.Second * 3):
+
+			c := len(check)
+			t := len(tags)
+
+			if t == 0 {
+				if c > 0 {
+					return
+				} else {
+					close(tags)
+					chapter<- true
+					check<- true
+					return
+				}
+			}
+
+
+		}
 	}
 
-	chapter<- true
+
 }
 
 func main()  {
@@ -170,19 +146,21 @@ func main()  {
 
 	log.SetOutput(file)
 
-	for i:=1; i<=10;i++  {
-		go setTags(pages, tags, chapter, check)
-		go getTags(tags, chapter)
-	}
-
 	startUrl := "http://rutube.ru/api/tags/?format=json&page=%d"
 	page := 1
 
 	url := fmt.Sprintf(startUrl, page)
 	go setPages(url, pages, chapter)
 
+	for i:=1; i<=10;i++  {
+		go setTags(pages, tags, chapter, check)
+	}
 
-	//close(tags)
+	time.Sleep(time.Second * 10)
+	for i:=1; i<=10;i++ {
+		go getTags(tags, chapter, check)
+	}
+
 	<- chapter
 
 }
