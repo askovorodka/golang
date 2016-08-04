@@ -117,9 +117,9 @@ func getTags(tags chan TagItem, chapter chan <- bool, check chan bool)  {
 				if c > 0 {
 					return
 				} else {
-					close(tags)
 					chapter<- true
 					check<- true
+					close(tags)
 					return
 				}
 			}
