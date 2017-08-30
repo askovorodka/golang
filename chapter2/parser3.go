@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"log"
+	"github.com/streadway/amqp"
 )
 
 type TVData struct {
@@ -23,6 +24,13 @@ type TVListItem struct  {
 	Name string `json:"name"`
 	Description string `json:"description"`
 	Picture string `json:"picture"`
+}
+
+func failOnError(err error, msg string)  {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+		panic(fmt.Sprintf("%s: %s", msg, err))
+	}
 }
 
 func setTvContents(tvContents chan <- string, chapter chan <- bool)  {
@@ -70,6 +78,10 @@ func setTvContents(tvContents chan <- string, chapter chan <- bool)  {
 }
 
 func main()  {
+
+	conn, err := amqp.Dial("amqp://username:password@localhost:15672/")
+	failOnError(err, "fail to connect RabbitMQ")
+	defer conn.Close()
 
 	tvContent := make(chan string, 10000)
 	chapter := make(chan bool, 1)
