@@ -15,19 +15,19 @@ func worker(id int, jobs <-chan int, results chan <- int)  {
 
 func main()  {
 
-	jobs := make(chan int, 1000)
-	results := make(chan int, 1000)
+	jobs := make(chan int, 100)
+	results := make(chan int, 100)
 
 	for w := 1; w <= 3; w++ {
 		go worker(w, jobs, results)
 	}
 
-	for j:=1; j <= 70; j++ {
+	for j:=1; j <= 100; j++ {
 		jobs<- j
 	}
 	close(jobs)
 
-	for r := 1; r <= 70; r++ {
+	for r := 1; r <= 100; r++ {
 		<- results
 	}
 
